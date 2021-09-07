@@ -1,0 +1,44 @@
+<script type="text/javascript">
+
+    function handleEnableDisable(itemId){
+        var currentValue = parseInt($(`#id_qty_${itemId}`).val());
+        var minusDisabled = currentValue < 2;
+        var plusDisabled = currentValue > 98;
+
+        $(`#decrement-qty_${itemId}`).prop('disabled', minusDisabled);
+        $(`#increment-qty_${itemId}`).prop('disabled', plusDisabled);
+    };
+
+    var allQtyInputs = $('.qty_input');
+    for(var i = 0; i < allQtyInputs.length; i++){
+        var itemId = $(allQtyInputs[i]).data('item_id');
+        handleEnableDisable(itemId);
+    };
+
+    allQtyInputs.change(() => {
+        var itemId = $(allQtyInputs).data('item_id');
+        handleEnableDisable(itemId);
+    });
+    
+    {% comment %} Increment quantity {% endcomment %}
+    $('.increment-qty').click((e) => {
+        e.preventDefault();
+
+        var closestInput = $('.increment-qty').closest('.input-group').find('.qty_input')[0];
+        var currentValue = parseInt($(closestInput).val());
+        $(closestInput).val(currentValue + 1)
+        var itemId = $('.increment-qty').data('item_id');
+        handleEnableDisable(itemId);
+    });
+    
+    {% comment %} Decrement quantity {% endcomment %}
+    $('.decrement-qty').click((e) => {
+        e.preventDefault();
+
+        var closestInput = $('.decrement-qty').closest('.input-group').find('.qty_input')[0];
+        var currentValue = parseInt($(closestInput).val());
+        $(closestInput).val(currentValue - 1)
+        var itemId = $('.decrement-qty').data('item_id');
+        handleEnableDisable(itemId);
+    });
+</script>
