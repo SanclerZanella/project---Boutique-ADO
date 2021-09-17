@@ -1,5 +1,6 @@
-from django.shortcuts import (render, redirect, reverse,
-                              get_object_or_404, HttpResponse)
+from django.shortcuts import (render, redirect,
+                              reverse, get_object_or_404,
+                              HttpResponse)
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.conf import settings
@@ -50,7 +51,11 @@ def checkout(request):
         }
         order_form = OrderForm(form_data)
         if order_form.is_valid():
-            order = order_form.save()
+            order = order_form.save(commit=False)
+            pid = request.POST.get('client_secret').split('_secret')[0]
+            order.stripe_pid = pid
+            order.original_bag = json.dumps(bag)
+            order.save()
             for item_id, item_data in bag.items():
                 try:
                     product = Product.objects.get(id=item_id)
@@ -94,24 +99,24 @@ def checkout(request):
         stripe_total = round(total * 100)
         stripe.api_key = stripe_secret_key
         intent = stripe.PaymentIntent.create(
-                    amount=stripe_total,
-                    currency=settings.STRIPE_CURRENCY,
-                )
+            amount=stripe_total,
+            currency=settings.STRIPE_CURRENCY,
+        )
 
         order_form = OrderForm()
 
-        if not stripe_secret_key:
-            messages.warning(request, 'Stripe public key is missing. \
-                Did you forget to set it in your enviroment?')
+    if not stripe_public_key:
+        messages.warning(request, 'Stripe public key is missing. \
+            Did you forget to set it in your environment?')
 
-        template = 'checkout/checkout.html'
-        context = {
-            'order_form': order_form,
-            'stripe_public_key': stripe_public_key,
-            'client_secret': intent.client_secret,
-        }
+    template = 'checkout/checkout.html'
+    context = {
+        'order_form': order_form,
+        'stripe_public_key': stripe_public_key,
+        'client_secret': intent.client_secret,
+    }
 
-        return render(request, template, context)
+    return render(request, template, context)
 
 
 def checkout_success(request, order_number):
